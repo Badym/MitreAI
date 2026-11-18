@@ -5,12 +5,13 @@ from fastapi.security import OAuth2PasswordBearer
 from pymongo.asynchronous.database import AsyncDatabase
 
 from app.core.config import Settings, get_settings
-from app.core.exceptions import AuthenticationError
-from app.models.user import User
+from app.core.exceptions import AuthenticationError, PermissionDeniedError
+from app.models.user import User, UserRole
 from app.repositories.health_repository import HealthRepository
 from app.repositories.user_repository import UserRepository
 from app.services.auth_service import AuthService
 from app.services.health_service import HealthService
+from app.services.user_service import UserService
 
 # Konfiguracja i baza
 
@@ -48,8 +49,13 @@ def get_auth_service(users: UserRepositoryDep, settings: SettingsDep) -> AuthSer
     return AuthService(users, settings)
 
 
+def get_user_service(users: UserRepositoryDep) -> UserService:
+    return UserService(users)
+
+
 HealthServiceDep = Annotated[HealthService, Depends(get_health_service)]
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+UserServiceDep = Annotated[UserService, Depends(get_user_service)]
 
 # Zalogowany użytkownik
 
@@ -66,3 +72,12 @@ async def get_current_user(
 
 
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
+
+
+def require_admin(user: CurrentUserDep) -> User:
+    if user.role != UserRole.ADMIN:
+        raise PermissionDeniedError("Ta operacja wymaga roli administratora")
+    return user
+
+
+AdminUserDep = Annotated[User, Depends(require_admin)]

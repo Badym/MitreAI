@@ -13,6 +13,9 @@ class UserRepository:
     async def get_by_email(self, email: str) -> User | None:
         return await User.find_one(User.email == email)
 
+    async def list_all(self) -> list[User]:
+        return await User.find_all().sort("+created_at").to_list()
+
     async def exists_with_role(self, role: UserRole) -> bool:
         return await User.find_one(User.role == role) is not None
 
