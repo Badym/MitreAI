@@ -9,6 +9,7 @@ TEST_ENVIRONMENT = {
     "JWT_SECRET": "test-secret-that-is-at-least-32-characters-long",
     "ADMIN_EMAIL": ADMIN_EMAIL,
     "ADMIN_PASSWORD": ADMIN_PASSWORD,
+    "AVAILABLE_MODELS": '["mock-small", "mock-large"]',
 }
 
 

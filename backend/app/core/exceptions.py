@@ -18,3 +18,7 @@ class NotFoundError(AppError):
 
 class ConflictError(AppError):
     pass
+
+
+class InvalidRequestError(AppError):
+    pass

@@ -44,3 +44,8 @@ async def admin_headers(client: AsyncClient) -> dict[str, str]:
 @pytest.fixture
 async def user_headers(client: AsyncClient, admin_headers: dict[str, str]) -> dict[str, str]:
     return await create_user_headers(client, admin_headers, "jan@example.com")
+
+
+@pytest.fixture
+async def other_user_headers(client: AsyncClient, admin_headers: dict[str, str]) -> dict[str, str]:
+    return await create_user_headers(client, admin_headers, "ola@example.com")

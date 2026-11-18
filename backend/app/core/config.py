@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     admin_email: EmailStr | None = None
     admin_password: SecretStr | None = None
 
+    available_models: list[str] = Field(default=["mock-small", "mock-large"], min_length=1)
+
 
 @lru_cache
 def get_settings() -> Settings:
