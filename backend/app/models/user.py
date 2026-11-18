@@ -13,6 +13,10 @@ class UserRole(StrEnum):
     USER = "user"
 
 
+def normalize_email(email: str) -> str:
+    return email.strip().lower()
+
+
 class User(Document):
     email: EmailStr
     password_hash: str
