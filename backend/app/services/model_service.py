@@ -1,5 +1,6 @@
 from app.core.config import Settings
 from app.core.exceptions import InvalidRequestError
+from app.schemas.llm_model import ModelResponse
 
 
 class ModelService:
@@ -10,8 +11,11 @@ class ModelService:
     def default_model(self) -> str:
         return self._models[0]
 
-    def list_models(self) -> list[str]:
-        return list(self._models)
+    def list_models(self) -> list[ModelResponse]:
+        return [
+            ModelResponse(id=model, is_default=model == self.default_model)
+            for model in self._models
+        ]
 
     def resolve(self, model: str | None) -> str:
         if model is None:

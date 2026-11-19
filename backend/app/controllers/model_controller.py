@@ -8,7 +8,4 @@ router = APIRouter(prefix="/models", tags=["models"])
 
 @router.get("", summary="Lista dostępnych modeli")
 async def list_models(model_service: ModelServiceDep, _: CurrentUserDep) -> list[ModelResponse]:
-    return [
-        ModelResponse(id=model, is_default=model == model_service.default_model)
-        for model in model_service.list_models()
-    ]
+    return model_service.list_models()
