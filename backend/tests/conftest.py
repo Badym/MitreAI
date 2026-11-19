@@ -5,6 +5,7 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
+from tests.fakes import FakeLLMProvider
 from tests.helpers import (
     ADMIN_EMAIL,
     ADMIN_PASSWORD,
@@ -16,12 +17,19 @@ from tests.helpers import (
 os.environ.update(TEST_ENVIRONMENT)
 os.environ.setdefault("MONGO_URL", "mongodb://localhost:27017")
 
+from app.dependencies import get_llm_provider  # noqa: E402
 from app.main import create_app  # noqa: E402
 
 
 @pytest.fixture
-async def app() -> AsyncIterator[FastAPI]:
+def llm_provider() -> FakeLLMProvider:
+    return FakeLLMProvider()
+
+
+@pytest.fixture
+async def app(llm_provider: FakeLLMProvider) -> AsyncIterator[FastAPI]:
     application = create_app()
+    application.dependency_overrides[get_llm_provider] = lambda: llm_provider
     async with application.router.lifespan_context(application):
         yield application
         database = application.state.database

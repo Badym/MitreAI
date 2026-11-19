@@ -1,5 +1,7 @@
 from httpx import AsyncClient, Response
 
+from tests.fakes import FakeLLMProvider, fake_reply
+
 PROMPT = "Sterownik PLC S7-1200 z dostępem przez VPN"
 
 
@@ -16,7 +18,7 @@ async def send(
     )
 
 
-async def test_send_message_returns_mock_reply(
+async def test_send_message_returns_model_reply(
     client: AsyncClient, user_headers: dict[str, str]
 ) -> None:
     conversation_id = await new_conversation_id(client, user_headers)
@@ -28,9 +30,26 @@ async def test_send_message_returns_mock_reply(
     assert body["user_message"]["role"] == "user"
     assert body["user_message"]["content"] == PROMPT
     assert body["assistant_message"]["role"] == "assistant"
-    assert body["assistant_message"]["content"] == "Odpowiedź z modelu mock-small"
+    assert body["assistant_message"]["content"] == fake_reply("mock-small")
     assert body["assistant_message"]["model"] == "mock-small"
     assert body["conversation"]["title"] == PROMPT
+
+
+async def test_model_receives_whole_conversation_history(
+    client: AsyncClient, user_headers: dict[str, str], llm_provider: FakeLLMProvider
+) -> None:
+    conversation_id = await new_conversation_id(client, user_headers)
+    await send(client, user_headers, conversation_id, content="Pierwsze pytanie")
+
+    await send(client, user_headers, conversation_id, content="Drugie pytanie")
+
+    model, history = llm_provider.calls[-1]
+    assert model == "mock-small"
+    assert history == [
+        ("user", "Pierwsze pytanie"),
+        ("assistant", fake_reply("mock-small")),
+        ("user", "Drugie pytanie"),
+    ]
 
 
 async def test_long_prompt_gives_shortened_title(
@@ -53,7 +72,7 @@ async def test_selected_model_answers_and_becomes_conversation_model(
     response = await send(client, user_headers, conversation_id, content=PROMPT, model="mock-large")
 
     body = response.json()
-    assert body["assistant_message"]["content"] == "Odpowiedź z modelu mock-large"
+    assert body["assistant_message"]["content"] == fake_reply("mock-large")
     assert body["conversation"]["model"] == "mock-large"
 
 
@@ -87,9 +106,9 @@ async def test_messages_are_listed_in_order(
     messages = [(item["role"], item["content"]) for item in response.json()]
     assert messages == [
         ("user", "Pierwsze pytanie"),
-        ("assistant", "Odpowiedź z modelu mock-small"),
+        ("assistant", fake_reply("mock-small")),
         ("user", "Drugie pytanie"),
-        ("assistant", "Odpowiedź z modelu mock-small"),
+        ("assistant", fake_reply("mock-small")),
     ]
 
 
