@@ -133,7 +133,7 @@ Prompt jest przesyłany jako formularz, a nie JSON, bo w kroku 7 dojdą do niego
 
 ### Modele językowe
 
-- Lista modeli pochodzi z `AVAILABLE_MODELS` w `.env` (lista JSON). Pierwszy jest domyślny. Obsługuje ją `ModelService`.
+- Lista modeli pochodzi z `AVAILABLE_MODELS` w `.env` (lista JSON). Pierwszy jest domyślny. Obsługuje ją `ModelService`: buduje listę z oznaczeniem modelu domyślnego (kontroler `/api/models` tylko ją zwraca) i sprawdza, czy wybrany model jest na liście.
 - `app/llm/provider.py` definiuje interfejs `LLMProvider` z jedną metodą `generate(model, history)`, która zwraca `ModelReply` (treść, tokeny, `analysis`).
 - Teraz działa `MockProvider` (`app/llm/mock_provider.py`), który zawsze odpowiada „Odpowiedź z modelu <nazwa>”.
 - Prawdziwy model będzie kolejną klasą z tą samą metodą `generate`. Wystarczy podmienić ją w `get_llm_provider` w `dependencies.py`, bez zmian w serwisach i endpointach.
@@ -183,16 +183,19 @@ Kolekcje i indeksy zakłada Beanie przy starcie backendu. `documents` czeka na k
 
 ### Testy
 
-43 testy backendu (`uv run pytest`). Testy z bazą działają na prawdziwym MongoDB w osobnej bazie `mitreai_test`, czyszczonej po każdym teście. Fixture'y `admin_headers`, `user_headers` i `other_user_headers` z `tests/conftest.py` dają gotowe nagłówki z tokenem.
+45 testów backendu (`uv run pytest`). Testy z bazą działają na prawdziwym MongoDB w osobnej bazie `mitreai_test`, czyszczonej po każdym teście. Fixture'y `admin_headers`, `user_headers` i `other_user_headers` z `tests/conftest.py` dają gotowe nagłówki z tokenem.
+
+Testy nie korzystają z modelu podpiętego w aplikacji. `tests/conftest.py` podmienia `get_llm_provider` na `FakeLLMProvider` z `tests/fakes.py`, który odpowiada „Testowa odpowiedź modelu <nazwa>” i zapisuje, z jaką historią go wywołano (fixture `llm_provider`). Dzięki temu po podpięciu prawdziwego modelu testy nadal będą szybkie, darmowe i powtarzalne. Sam `MockProvider` ma osobny test w `test_llm.py`.
 
 | Plik | Co sprawdza |
 |---|---|
 | `test_health.py` | health z podmienionym repozytorium, bez bazy (200, 503, Swagger pod `/api`) |
+| `test_llm.py` | odpowiedź `MockProvider` z nazwą modelu |
 | `test_security.py` | hashowanie haseł i tokeny (ważny, wygasły, podpisany innym kluczem, uszkodzony) |
 | `test_auth.py` | admin przy starcie bez duplikatów, logowanie niezależne od wielkości liter, te same błędy dla złego e-maila i hasła, `/me`, dezaktywacja konta |
 | `test_users.py` | zakładanie kont, duplikat, za krótkie hasło, 403 dla zwykłego użytkownika, dezaktywacja, reset hasła, admin nie może zablokować siebie, 404 |
 | `test_conversations.py` | model domyślny, nieznany model, lista tylko własnych rozmów, 404 dla cudzej rozmowy, zmiana tytułu i modelu, archiwum, usuwanie z wiadomościami |
-| `test_messages.py` | odpowiedź atrapy, tytuł z promptu i jego skracanie, wybór modelu, nieznany model, pusty prompt, kolejność wiadomości, przesuwanie rozmowy na górę listy, cudza rozmowa, lista modeli |
+| `test_messages.py` | odpowiedź modelu, przekazanie modelowi całej historii rozmowy, tytuł z promptu i jego skracanie, wybór modelu, nieznany model, pusty prompt, kolejność wiadomości, przesuwanie rozmowy na górę listy, cudza rozmowa, lista modeli |
 
 ## Znane ograniczenia
 
@@ -209,6 +212,12 @@ Kolekcje i indeksy zakłada Beanie przy starcie backendu. `documents` czeka na k
 - Backend działa na Pythonie 3.13. Instalacja 3.12 przez uv nie działała na komputerze deweloperskim.
 
 ## Dziennik zmian
+
+### 2026-11-19: porządki w backendzie
+
+- Oznaczenie modelu domyślnego przeniesione z kontrolera `/api/models` do `ModelService`.
+- Testy dostały własną atrapę modelu (`FakeLLMProvider`) podpinaną w `conftest.py`, niezależną od modelu ustawionego w aplikacji.
+- Nowe testy: przekazanie modelowi całej historii rozmowy i odpowiedź `MockProvider`.
 
 ### 2026-11-17: frontend czatu
 
