@@ -1,0 +1,29 @@
+.wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.label {
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.select {
+  padding: 6px 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-surface);
+  font-size: 0.875rem;
+  cursor: pointer;
+}
+
+.select:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.select:focus-visible {
+  outline: 2px solid var(--color-text);
+  outline-offset: 1px;
+}
